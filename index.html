@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bindu Choco Creams</title>
+
+<style>
+body { margin:0; font-family:Arial; background:#fff5f0; }
+
+header {
+    background:#4e342e; color:white;
+    text-align:center; padding:15px;
+}
+
+/* SLIDES */
+.slide { display:none; padding:20px; }
+.active { display:block; }
+
+/* PRODUCTS */
+.products {
+    display:flex; flex-wrap:wrap;
+    gap:20px; justify-content:center;
+}
+
+.card {
+    background:white; padding:15px;
+    border-radius:10px; width:200px;
+    text-align:center;
+}
+
+.card img {
+    width:100%; height:120px;
+    object-fit:cover; border-radius:10px;
+}
+
+/* COMMON */
+button {
+    background:#6d4c41; color:white;
+    border:none; padding:8px 12px;
+    margin:5px; border-radius:5px;
+    cursor:pointer;
+}
+
+.remove { background:red; }
+
+input, textarea, select {
+    width:100%; padding:8px; margin:5px 0;
+}
+
+/* NAV */
+.nav {
+    text-align:center;
+    margin:20px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>🍫 Bindu Choco Creams</h1>
+</header>
+
+<!-- SLIDE 1: PRODUCTS -->
+<div class="slide active" id="slide1">
+<h2>🍫 Order Chocolates</h2>
+
+<div class="products">
+<div class="card">
+<img src="https://images.unsplash.com/photo-1549007994-cb92caebd54b">
+<h3>Dark Chocolate</h3>
+<p>₹199</p>
+<button onclick="addToCart('Dark Chocolate',199)">Add</button>
+</div>
+
+<div class="card">
+<img src="https://images.unsplash.com/photo-1610450949065-1f2841536c88">
+<h3>Milk Chocolate</h3>
+<p>₹149</p>
+<button onclick="addToCart('Milk Chocolate',149)">Add</button>
+</div>
+
+<div class="card">
+<img src="https://images.unsplash.com/photo-1511381939415-e44015466834">
+<h3>Truffles</h3>
+<p>₹299</p>
+<button onclick="addToCart('Truffles',299)">Add</button>
+</div>
+</div>
+
+<h3>🛒 Cart</h3>
+<ul id="cart"></ul>
+<h3>Total: ₹<span id="total">0</span></h3>
+
+<div class="nav">
+<button onclick="nextSlide(2)">Next ➡️</button>
+</div>
+</div>
+
+<!-- SLIDE 2: DELIVERY -->
+<div class="slide" id="slide2">
+<h2>🚚 Delivery Details</h2>
+
+<input id="name" placeholder="Name">
+<input id="phone" placeholder="Phone">
+<textarea id="address" placeholder="Address"></textarea>
+
+<div class="nav">
+<button onclick="prevSlide(1)">⬅️ Back</button>
+<button onclick="nextSlide(3)">Next ➡️</button>
+</div>
+</div>
+
+<!-- SLIDE 3: PAYMENT -->
+<div class="slide" id="slide3">
+<h2>💳 Payment</h2>
+
+<select id="payment">
+<option value="">Select</option>
+<option value="COD">Cash on Delivery</option>
+<option value="UPI">UPI</option>
+</select>
+
+<input id="upi" placeholder="Enter UPI ID">
+
+<div class="nav">
+<button onclick="prevSlide(2)">⬅️ Back</button>
+<button onclick="placeOrder()">Place Order</button>
+</div>
+</div>
+
+<!-- SLIDE 4: ORDERS -->
+<div class="slide" id="slide4">
+<h2>📦 Previous Orders</h2>
+<ul id="orders"></ul>
+
+<div class="nav">
+<button onclick="prevSlide(1)">⬅️ Home</button>
+</div>
+</div>
+
+<script>
+let cart = [];
+let total = 0;
+
+/* CART */
+function addToCart(name, price) {
+    cart.push({name, price});
+    total += price;
+    renderCart();
+}
+
+function removeItem(i) {
+    total -= cart[i].price;
+    cart.splice(i,1);
+    renderCart();
+}
+
+function renderCart() {
+    let list = document.getElementById("cart");
+    list.innerHTML = "";
+
+    cart.forEach((item,i)=>{
+        list.innerHTML += `
+        <li>${item.name} - ₹${item.price}
+        <button class="remove" onclick="removeItem(${i})">❌</button>
+        </li>`;
+    });
+
+    document.getElementById("total").innerText = total;
+}
+
+/* SLIDES */
+function nextSlide(n) {
+    showSlide(n);
+}
+function prevSlide(n) {
+    showSlide(n);
+}
+function showSlide(n) {
+    document.querySelectorAll(".slide").forEach(s=>s.classList.remove("active"));
+    document.getElementById("slide"+n).classList.add("active");
+}
+
+/* ORDER */
+function placeOrder() {
+    let name = document.getElementById("name").value;
+    let phone = document.getElementById("phone").value;
+    let address = document.getElementById("address").value;
+    let payment = document.getElementById("payment").value;
+    let upi = document.getElementById("upi").value;
+
+    if(!name || !phone || !address || !payment) {
+        alert("Fill all details");
+        return;
+    }
+
+    if(payment==="UPI" && !upi) {
+        alert("Enter UPI ID");
+        return;
+    }
+
+    let order = {
+        name, phone, address, payment,
+        items: cart,
+        total
+    };
+
+    let orders = JSON.parse(localStorage.getItem("orders")) || [];
+    orders.push(order);
+    localStorage.setItem("orders", JSON.stringify(orders));
+
+    alert("Order Placed 🎉");
+
+    cart=[]; total=0;
+    renderCart();
+
+    loadOrders();
+    showSlide(4);
+}
+
+/* LOAD ORDERS */
+function loadOrders() {
+    let orders = JSON.parse(localStorage.getItem("orders")) || [];
+    let list = document.getElementById("orders");
+    list.innerHTML = "";
+
+    orders.forEach((o,i)=>{
+        list.innerHTML += `
+        <li>
+        ${o.name} - ₹${o.total}
+        <button onclick="returnOrder(${i})">Return</button>
+        </li>`;
+    });
+}
+
+/* RETURN */
+function returnOrder(i) {
+    let orders = JSON.parse(localStorage.getItem("orders"));
+    orders.splice(i,1);
+    localStorage.setItem("orders", JSON.stringify(orders));
+    loadOrders();
+}
+
+/* INIT */
+loadOrders();
+</script>
+
+</body>
+</html>
